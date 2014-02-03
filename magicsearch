@@ -16,23 +16,7 @@ maxcount = 50000			# 0 for infinite reading
 
 # recipes
 
-#import Exif, html, JFIF, m3u, PDF, RIFF, vCard, xml, ZIP
-import MTS
-import sys, os
-recipes = {
-#		'Exif.py':		Exif.identify,
-#		'html.py':		html.identify,
-#		'JFIF.py':		JFIF.identify,
-#		'm3u.py':		m3u.identify,
-#		'PDF.py':		PDF.identify,
-#		'RIFF.py':		RIFF.identify,
-#		'vCard.py':		vCard.identify,
-#		'xml.py':		xml.identify,
-#		'ZIP.py':		ZIP.identify
-		'MTS.py':		MTS.identify
-	}
-path = os.path.dirname(__file__)
-
+import sys, os, magic
 
 # console arguments
 
@@ -44,18 +28,18 @@ ipos = 0
 if len(sys.argv) > 2:
 	ipos = long(sys.argv[2])
 
-
 # exit function
 
 def exitfunction():
 	log("stopped reading at ipos "+str(ipos))
 sys.exitfunc = exitfunction
 
-
 # main
 
 from utils import *
-from subprocess import Popen
+
+ms = magic.open(magic.NONE)
+ms.load()
 
 log('Analyzing '+dev+', starting from ipos '+str(ipos)+' ...')
 device = open(dev)
@@ -63,15 +47,16 @@ device.seek(ipos)
 num = 0
 block = device.read(blocksize)
 while block and ((num < maxcount) or (maxcount == 0)):
-	for recipe in recipes.keys():
-		if recipes[recipe](block):
-			position = str(ipos)+' ('+format(ipos)+')'
-			print 'Hit @ '+position+': '+recipe
-			cmd = path+'/'+recipe+' "'+dev+'" '+str(ipos)
-			print cmd
-			Popen(cmd, shell=True)	# invoke recovery recipe
+	tp = ms.buffer(block)
+	print (tp)
+#		position = str(ipos)+' ('+format(ipos)+')'
+#		print 'Hit @ '+position+': '+recipe
+#		cmd = path+'/'+recipe+' "'+dev+'" '+str(ipos)
+#		print cmd
+#		Popen(cmd, shell=True)	# invoke recovery recipe
 #			log(position+': '+fileutil(dev, ipos))				# use "file" util to identify chunk
-	ipos += blocksize
-	num += 1
+#	ipos += blocksize
+#	num += 1
 	block = device.read(blocksize)
 
+ms.close()
